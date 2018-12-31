@@ -1,14 +1,20 @@
 package org.springframework.samples.mvc.config;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.samples.mvc.async.TimeoutCallableProcessingInterceptor;
 import org.springframework.samples.mvc.convert.MaskFormatAnnotationFormatterFactory;
 import org.springframework.samples.mvc.data.custom.CustomArgumentResolver;
+import org.springframework.samples.mvc.data.custom.CustomizedBindingAttributeResolver;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.multipart.MultipartResolver;
@@ -39,6 +45,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 	@Override
 	public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
 		resolvers.add(new CustomArgumentResolver());
+		resolvers.add(new CustomizedBindingAttributeResolver ());
 	}
 
 	// Handle HTTP GET requests for /resources/** by efficiently serving
@@ -76,5 +83,20 @@ public class WebMvcConfig implements WebMvcConfigurer {
 	public MultipartResolver multipartResolver() {
 		return new CommonsMultipartResolver();
 	}
+
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+
+        StringHttpMessageConverter stringConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
+        stringConverter.setWriteAcceptCharset(false);
+        converters.add(stringConverter);
+
+        Jackson2ObjectMapperBuilder builder = Jackson2ObjectMapperBuilder.json();
+
+        MappingJackson2HttpMessageConverter jsonConverter
+            = new MappingJackson2HttpMessageConverter(builder.build());
+        jsonConverter.setDefaultCharset(StandardCharsets.UTF_8);
+
+        converters.add(jsonConverter);
+    }
 
 }
